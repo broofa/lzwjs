@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+      body, button, textarea, input {
+        font-family: sans-serif;
+        font-size: 12pt;
+      }
+      button {
+        margin: 8px 0px;
+        white-space: nowrap;
+        border-radius: 4px;
+      }
+      textarea {
+        margin: 10px;
+        display:block;
+        border: solid 1px #888;
+        border-radius: 8px;
+        padding: 8px;
+        overflow-x: hidden;
+        overflow-x: auto;
+      }
+      #left, #middle, #right {
+        padding: 10px;
+        position: absolute;
+      }
+      #left, #right {
+        top: 10px;
+        bottom: 10px;
+      }
+      #left {
+        left: 10px;
+        right: 60%;
+      }
+      #middle {
+        top: 0px;
+        left: 41%;
+        right: 41%;
+      }
+      #right {
+        right: 10px;
+        left: 60%;
+      }
+      #log {
+        font-size: 12px;
+        color: #444;
+        font-family: monospace;
+      }
+		</style>
+	</head>
+
+	<body>
+    <textarea id="left" placeholder="Text to encode with LZW.encode()">Paste some text here and click "LZW.encode()" to see the compressed version.</textarea>
+    <div id="middle">
+      <div>
+      <button onclick="doit(true)">LZW.encode() &raquo; &raquo;</button>
+      <button onclick="doit(false)">&laquo; &laquo; LZW.decode()</button>
+      </div>
+      <label><input id="utf8encode" type="checkbox" checked />UTF8-encode</label>
+      <p style="font-size: 10px; color: #666;">
+      (tip: Paste some <a target="_blank" href="http://search.twitter.com/search.json?q=inbend">Twitter search results</a> to see how LZW.js does on larger stuff)
+      </p>
+      <hr />
+      <div id="log"></div>
+    </div>
+    <textarea id="right" placeholder="Text to decode with LZW.decode()"></textarea>
+	</body>
+</html>
+
+<script src="LZW.js"></script>
+<script>
+  function $(id) {return document.getElementById(id);}
+
+  function perc(x, y) {return (100*(x - y)/x).toFixed(1) + '%'};
+
+  function verifyEncodable(s) {
+    for (var i = 0; i < s.length; i++) {
+      var code = s.charCodeAt(i);
+      if (code >= 0xd800 && code <= 0xdfff) {
+        console.error('Invalid unicode char, 0x' + code.toString(16) + ' at index ' + i);
+      }
+    }
+  }
+
+  function doit(encode) {
+    var utfEscape = $('utf8encode').checked;
+    var pre = $(encode ? 'left' : 'right').value;
+    var t = new Date();
+
+    try {
+      var post = encode ? LZW.encode(pre, !utfEscape) : LZW.decode(pre, !utfEscape);
+    } catch(e) {
+      $('log').innerHTML = e.message;
+      return;
+    }
+
+    t = new Date() - t;
+
+    $(encode ? 'right' : 'left').value = post;
+    $(encode ? 'left' : 'right').value = '';
+
+    var postpost = !encode ? LZW.encode(post, !utfEscape) : LZW.decode(post, !utfEscape);
+
+    var results = [
+      'Before: ' + pre.length + ' chars',
+      'After: ' + post.length + ' chars',
+      '&Delta;: ' + perc(pre.length, post.length),
+      'Time: ' + t + ' msecs',
+      'Lossless? ' + (pre == postpost ? '&radic;' : ' No (fuuuuuu!)')
+    ];
+
+    $('log').innerHTML = results.join('<br />');
+  }
+</script>
