@@ -21,3 +21,5 @@ The Ugly:
 Sometimes clients need to push a lot of data back to the server. And sometimes that data would compress really nicely (I'm looking at you, every JSON-API out there!)  Sadly, there's zero support for this sort of thing in browsers today.  LZW.js is intended as a cheap-to-download API for doing "pretty good" compression in the client.
 
 Is it practical?  Well... maybe. One big issue is that AJAX requests are traditionally made using `application/x-www-form-urlencoded` content types. And URL-encoding bloats the hell out of... well... pretty much any text stream.
+=======
+lzwjs
