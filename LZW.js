@@ -1,6 +1,13 @@
 //     Copyright (c) 2012 Robert Kieffer
 //     MIT license
 //     www: https://github.com/broofa/lzwjs
+//
+// This is a simplistic LZW compression implementation for Javascript strings.
+// It works well if what you care about is JS string length (as measured in #
+// of unicode characters). However if what you care about is actual bytes -
+// which is probably the case - be aware that UTF8 encoding will increase the
+// size of the result by up to 2X.
+
 (function() {
   var _global = this;
 
@@ -16,10 +23,10 @@
 
   function encode(s, options) {
     // We utf8 encode to work around issues with Unicode values being outside
-    // the expected 0-255 range this algorithm is designed for.  This is
-    // somewhat brittle in that encodeURIComponent() will throw if it
-    // encounters invalid unicode surrogate pairs (i.e. invalid Unicode strings
-    // which, yes, you can actually create in JS :P)
+    // the expected 0-255 range of values.  This is somewhat brittle in that
+    // encodeURIComponent() will throw if it encounters invalid unicode
+    // surrogate pairs (i.e. invalid Unicode strings which, yes, you can
+    // create in JS :P)
     //
     // See also:
     // http://stackoverflow.com/questions/3744721/javascript-strings-outside-of-the-bmp
@@ -41,8 +48,8 @@
 
         dict[newp] = code++;
 
-        // We have to limit lookup codes to what can be stored in a JS [UCS-2,
-        // 16-bit] character
+        // Limit lookup codes to what can be stored in a JS [UCS-2, 16-bit]
+        // character.
         if (code > 0xffff) throw new Error('LZW overflow');
 
         oldp = c;

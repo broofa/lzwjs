@@ -71,15 +71,44 @@
 <script>
   function $(id) {return document.getElementById(id);}
 
-  function perc(x, y) {return (100*(x - y)/x).toFixed(1) + '%'};
+  function perc(x, y) {return -(100*(x - y)/x).toFixed(1) + '%'};
 
-  function verifyEncodable(s) {
+  function isUnicode(s) {
+    for (var i = 0; i < s.length; i++) {
+      if (s.charCodeAt(i) > 0xff) {return true;}
+    }
+    return false;
+  }
+
+  function isValidUnicode(s) {
     for (var i = 0; i < s.length; i++) {
       var code = s.charCodeAt(i);
       if (code >= 0xd800 && code <= 0xdfff) {
-        console.error('Invalid unicode char, 0x' + code.toString(16) + ' at index ' + i);
+        return false;
       }
     }
+    return true;
+  }
+
+  function getUTF8Length(s) {
+    var len = 0;
+    for (var i = 0; i < s.length; i++) {
+      var code = s.charCodeAt(i);
+      if (code <= 0x7f) {
+        len += 1;
+      } else if (code <= 0x7ff) {
+        len += 2;
+      } else if (code >= 0xd800 && code <= 0xdfff) {
+        // Surrogate pair: These take 4 bytes in UTF-8 and 2 chars in UCS-2
+        // (Assume next char is the other [valid] half and just skip it)
+        len += 4; i++;
+      } else if (code < 0xffff) {
+        len += 3;
+      } else {
+        len += 4;
+      }
+    }
+    return len;
   }
 
   function doit(encode) {
@@ -101,10 +130,15 @@
 
     var postpost = !encode ? LZW.encode(post, !utfEscape) : LZW.decode(post, !utfEscape);
 
+    var utf8Pre = utf8Length(pre);
+    var utf8Post = utf8Length(post);
     var results = [
       'Before: ' + pre.length + ' chars',
       'After: ' + post.length + ' chars',
       '&Delta;: ' + perc(pre.length, post.length),
+      'Before(utf8): ' + utf8Pre + ' chars',
+      'After(utf8): ' + utf8Post + ' chars',
+      '&Delta;(utf8): ' + perc(utf8Pre, utf8Post),
       'Time: ' + t + ' msecs',
       'Lossless? ' + (pre == postpost ? '&radic;' : ' No (fuuuuuu!)')
     ];
